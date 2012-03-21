@@ -1,92 +1,152 @@
 class Player
+  GRAVITY = 1.0
+  HEIGHT = 45
+  WIDTH = 25
+  JUMP_SPEED = -30
+  REACH = 50
+
   attr_reader :x, :y, :score
 
   def initialize(window, x, y)
     @x, @y = x, y
     @dir = :left
-    @vy = 0 # Vertical velocity
+    @vy = 0
     @score = 0
     @map = window.map
     @beep = Gosu::Sample.new(window, "media/Beep.wav")
     @jump_sound = Gosu::Sample.new(window, "media/boink.wav")
-    # Load all animation frames
-    @standing, @walk1, @walk2, @jump =
-      *Image.load_tiles(window, "media/CptnRuby.png", 50, 50, false)
-    # This always points to the frame that is currently drawn.
-    # This is set in update, and used in draw.
-    @cur_image = @standing    
+    @standing, @walk1, @walk2, @jump = *Image.load_tiles(window, "media/CptnRuby.png", 50, 50, false)
+    @current_image = @standing    
   end
   
   def draw
-    # Flip vertically when facing to the left.
-    if @dir == :left then
-      offs_x = -25
-      factor = 1.0
-    else
-      offs_x = 25
-      factor = -1.0
-    end
-    @cur_image.draw(@x + offs_x, @y - 49, ZOrder::CptnRuby, factor, 1.0)
-  end
-  
-  # Could the object be placed at x + offs_x/y + offs_y without being stuck?
-  def would_fit(offs_x, offs_y)
-    # Check at the center/top and center/bottom for map collisions
-    not @map.solid?(@x + offs_x, @y + offs_y) and
-      not @map.solid?(@x + offs_x, @y + offs_y - 45)
+    direction = @dir == :left ? -1 : 1
+    @current_image.draw(@x + direction * WIDTH, @y - HEIGHT - 4, ZOrder::CptnRuby, - direction * 1.0, 1.0)
   end
   
   def update(move_x)
-    # Select image depending on action
-    if (move_x == 0)
-      @cur_image = @standing
-    else
-      @cur_image = (milliseconds / 175 % 2 == 0) ? @walk1 : @walk2
-    end
-    if (@vy < 0)
-      @cur_image = @jump
-    end
-    
-    # Directional walking, horizontal movement
-    if move_x > 0 then
-      @dir = :right
-      move_x.times { if would_fit(1, 0) then @x += 1 end }
-    end
-    if move_x < 0 then
-      @dir = :left
-      (-move_x).times { if would_fit(-1, 0) then @x -= 1 end }
-    end
-
-    # Acceleration/gravity
-    # By adding 1 each frame, and (ideally) adding vy to y, the player's
-    # jumping curve will be the parabole we want it to be.
-    @vy += 1
-    # Vertical movement
-    if @vy > 0 then
-      @vy.times { if would_fit(0, 1) then @y += 1 else @vy = 0 end }
-    end
-    if @vy < 0 then
-      (-@vy).times { if would_fit(0, -1) then @y -= 1 else @vy = 0 end }
-    end
+    update_image(move_x)
+    move_horizontally(move_x)
+    add_gravity
+    move_vertically
   end
   
-  def try_to_jump
-    if @map.solid?(@x, @y + 1) then
-      @vy = -30
+  def jump
+    unless can_move?(0, 1)
+      @vy = JUMP_SPEED
       @jump_sound.play
     end
   end
   
   def collect_gems(gems)
-    # Same as in the tutorial game.
-    gems.reject! do |c|
-      if (c.x - @x).abs < 50 and (c.y - @y).abs < 50
-        @score += 1
-        @beep.play
+    gems.reject! do |g|
+      if can_collect?(g.x, g.y)
+        increment_score
         true
       else
         false
       end
     end
   end
+  
+  private
+  
+  def increment_score
+    @score += 1
+    @beep.play
+  end
+  
+  def can_move?(d_x, d_y)
+    top_can_move?(d_x, d_y) && bottom_can_move?(d_x, d_y)
+  end
+  
+  def update_image(move_x)
+    @current_image = if @vy < 0
+      @jump
+    elsif move_x == 0
+      @standing
+    else
+      walk_image
+
+    end
+  end
+  
+  def move_horizontally(move_x)
+    if move_x > 0
+      @dir = :right
+      move_right(move_x)
+    elsif move_x < 0
+      @dir = :left
+      move_left(-move_x)
+    end
+  end
+
+  def add_gravity
+    @vy += GRAVITY
+  end
+  
+  def move_vertically
+    if @vy > 0
+      move_up
+    elsif @vy < 0
+      move_down
+    end
+  end
+  
+  def move_right(distance)
+    distance.to_i.times do
+      break unless can_move?(1, 0)
+      @x += 1
+    end
+  end
+  
+  def move_left(distance)
+    distance.to_i.times do
+      break unless can_move?(-1, 0)
+      @x -= 1
+    end
+  end
+  
+  def move_up
+    @vy.to_i.times do
+      if can_move?(0, 1) 
+        @y += 1 
+      else 
+        @vy = 0
+        break
+      end
+    end
+  end
+  
+  def move_down
+    (-@vy).to_i.times do
+      if can_move?(0, -1) 
+        @y -= 1 
+      else 
+        @vy = 0
+        break
+      end
+    end
+  end
+  
+  def top_can_move?(d_x, d_y)
+    map_open?(@x + d_x, @y + d_y)
+  end
+  
+  def bottom_can_move?(d_x, d_y)
+    map_open?(@x + d_x, @y + d_y - HEIGHT)
+  end
+  
+  def map_open?(x, y)
+    !@map.solid?(x, y)
+  end
+  
+  def walk_image
+    (milliseconds / 175 % 2 == 0) ? @walk1 : @walk2
+  end
+  
+  def can_collect?(x, y)
+    (x - @x).abs < REACH && (y - @y).abs < REACH
+  end
+  
 end

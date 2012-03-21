@@ -7,7 +7,6 @@ class CollectibleGem
   end
   
   def draw
-    # Draw, slowly rotating
     @image.draw_rot(@x, @y, ZOrder::Gems, 25 * Math.sin(milliseconds / 133.7))
   end
   
