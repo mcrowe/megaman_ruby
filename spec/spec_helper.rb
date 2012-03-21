@@ -1,1 +1,0 @@
-require File.dirname(__FILE__) + '/../lib/ctpn_ruby.rb'

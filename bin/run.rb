@@ -2,7 +2,7 @@
 
 require 'drb'
 
-class MyGame
+class Service
   def restart
     $stderr.puts 'restarted'
     $stderr.flush
@@ -10,11 +10,11 @@ class MyGame
   end
 end
 
-DRb.start_service("druby://127.0.0.1:9000", MyGame.new)
+DRb.start_service("druby://127.0.0.1:9000", Service.new)
 $stderr.puts "Game is ready and listening on port 9000"
 $stderr.flush
 
 $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__) + '/../lib')
-require "ctpn_ruby"
+require 'cptn_ruby'
 
 DRb.thread.join
