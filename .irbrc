@@ -1,0 +1,1 @@
+require Dir.pwd + "/lib/ctpn_ruby.rb"
