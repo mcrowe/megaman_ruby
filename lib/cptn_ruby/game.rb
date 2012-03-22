@@ -2,6 +2,7 @@ class Game < Window
 
   SCREEN_WIDTH = 960
   SCREEN_HEIGHT = 560
+  TILE_SIZE = 50
 
   attr_reader :map
 
@@ -10,14 +11,12 @@ class Game < Window
     self.caption = 'Captain Ruby'
     
     @sky = Image.new(self, 'media/Space.png', true)
-    
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
     @background_music = Gosu::Sample.new(self, 'media/8-bit-loop.mp3')
     # @background_music.play(1, 1, true)
-
     @paused = false
-
     @level = 0
+    
     load_next_level
   end   
   
@@ -60,14 +59,19 @@ class Game < Window
     else
       draw_world       
     end
+    
   end
   
   def button_down!(button)
     case button
-    when KbUp     then @player.jump
-    when KbEscape then close
-    when KbSpace  then toggle_paused
-    when KbR      then load_level
+    when KbUp     
+      @player.jump
+    when KbEscape
+      close
+    when KbSpace
+      toggle_paused
+    when KbR
+      load_level
     end
   end
   
@@ -103,8 +107,13 @@ class Game < Window
   end
   
   def update_camera
-    @camera_x = [[@player.x - 480, 0].max, @map.width * 50 - 960].min
-    @camera_y = [[@player.y - 280, 0].max, @map.height * 50 - 560].min 
+    max_x = map_width_in_pixels - SCREEN_WIDTH
+    x_with_player_in_center_screen = @player.x - (SCREEN_WIDTH / 2)
+    @camera_x = [ [0, x_with_player_in_center_screen].max, max_x].min
+    
+    max_y = map_height_in_pixels - SCREEN_HEIGHT
+    y_with_player_in_center_screen = @player.y - (SCREEN_HEIGHT / 2)
+    @camera_y = [ [0, y_with_player_in_center_screen].max, max_y].min 
   end
   
   def draw_hud
@@ -127,7 +136,10 @@ class Game < Window
   end
   
   def draw_level_loading
-    @font.draw("Loading Level #{@level} ...", 250, 220, ZOrder::UI, 1.0, 1.0, 0xffffffff)
+    x = (SCREEN_WIDTH / 2) - 100
+    y = (SCREEN_HEIGHT / 2) - 10
+    
+    @font.draw("Loading Level #{@level} ...", x, y, ZOrder::UI, 1.0, 1.0, 0xffffffff)
   end
   
   def draw_sky
@@ -146,6 +158,14 @@ class Game < Window
   
   def draw_player
     @player.draw
+  end
+  
+  def map_width_in_pixels
+    @map.width * TILE_SIZE
+  end
+  
+  def map_height_in_pixels
+    @map.height * TILE_SIZE
   end
   
 end
