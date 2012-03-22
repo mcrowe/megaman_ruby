@@ -12,11 +12,13 @@ class Game < Window
     
     @sky = Image.new(self, 'media/Space.png', true)
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
-    @background_music = Gosu::Sample.new(self, 'media/8-bit-loop.mp3')
-    # @background_music.play(1, 1, true)
+    @beep = Gosu::Sample.new(self, "media/Beep.wav")
+
     @paused = false
     @level = 0
-    
+    @score = 0
+
+    load_next_song    
     load_next_level
   end   
   
@@ -38,21 +40,29 @@ class Game < Window
     return if paused?
     return if loading_level?
     
-    move_x = 0
-    move_x -= 5 if button_down?(KbLeft)
-    move_x += 5 if button_down?(KbRight)
-    @player.update(move_x)
-    @player.collect_gems(@map.gems)
+    @player.step_left if button_down?(KbLeft)
+    @player.step_right if button_down?(KbRight)
+    
+    @player.update
+    
+    gems_collected = @player.collect_gems
+
+    if gems_collected > 0
+      @score += gems_collected
+      @beep.play
+    end
     
     update_camera
 
-    if @map.gems.empty?
-      load_next_level
-    end
+    load_next_level if level_complete?
+
   end
   
   def draw!
-    return if paused?
+  
+    if paused?
+      draw_paused
+    end
     
     if loading_level?
       draw_level_loading
@@ -72,6 +82,10 @@ class Game < Window
       toggle_paused
     when KbR
       load_level
+    when KbP
+      toggle_song
+    when KbO
+      load_next_song  
     end
   end
   
@@ -94,7 +108,6 @@ class Game < Window
   end
   
   def pause
-    puts 'Pausing...'
     @paused = true
   end
   
@@ -117,8 +130,16 @@ class Game < Window
   end
   
   def draw_hud
-    @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xffffff00)
+    @font.draw("Score: #{@score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xffffff00)
   end
+  
+  def draw_paused
+    x = (SCREEN_WIDTH / 2) - 35
+    y = (SCREEN_HEIGHT / 2) - 20
+    
+    @font.draw("PAUSED", x, y, ZOrder::UI, 1.0, 1.0, 0xffffffff)
+  end
+  
   
   def load_next_level
     @level += 1
@@ -136,10 +157,10 @@ class Game < Window
   end
   
   def draw_level_loading
-    x = (SCREEN_WIDTH / 2) - 100
-    y = (SCREEN_HEIGHT / 2) - 10
+    x = (SCREEN_WIDTH / 2) - 35
+    y = (SCREEN_HEIGHT / 2) - 20
     
-    @font.draw("Loading Level #{@level} ...", x, y, ZOrder::UI, 1.0, 1.0, 0xffffffff)
+    @font.draw("LEVEL #{@level}", x, y, ZOrder::UI, 1.0, 1.0, 0xffffffff)
   end
   
   def draw_sky
@@ -166,6 +187,25 @@ class Game < Window
   
   def map_height_in_pixels
     @map.height * TILE_SIZE
+  end
+  
+  def level_complete?
+    @map.no_more_gems?
+  end
+  
+  def toggle_song
+    if @song.playing?
+      @song.pause
+    else
+      @song.play(true)
+    end
+  end
+  
+  def load_next_song
+    filename = ['8-bit-electrohouse.wav', '8-bit-loop.mp3', 'spy-game-sneeking.mp3'].sample
+      
+    @song = Gosu::Song.new(self, "media/#{filename}")
+    toggle_song
   end
   
 end

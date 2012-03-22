@@ -54,4 +54,9 @@ class Map
   def solid?(x, y)
     y < 0 || @tiles[x / 50][y / 50]
   end
+  
+  def no_more_gems?
+    @gems.empty?
+  end
+  
 end
