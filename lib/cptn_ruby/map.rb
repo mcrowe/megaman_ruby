@@ -1,4 +1,5 @@
 class Map
+  include AssetsHelper
   
   module Tiles
     Grass = 0
@@ -7,11 +8,11 @@ class Map
   
   attr_reader :width, :height, :gems
   
-  def initialize(window, filename)
+  def initialize(filename)
     # Load 60x60 tiles, 5px overlap in all four directions.
-    @tileset = Image.load_tiles(window, "media/CptnRuby Tileset.png", 60, 60, true)
+    @tileset = Image.load_tiles($window, image_path('tileset.png'), 60, 60, true)
 
-    gem_img = Image.new(window, "media/CptnRuby Gem.png", false)
+    gem_img = Image.new($window, image_path('gem.png'), false)
     @gems = []
 
     lines = File.readlines(filename).map { |line| line.chomp }

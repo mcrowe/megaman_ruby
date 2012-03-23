@@ -1,4 +1,6 @@
 class Player
+  include AssetsHelper
+
   GRAVITY = 1.0
   HEIGHT = 45
   WIDTH = 25
@@ -8,14 +10,14 @@ class Player
 
   attr_reader :x, :y, :score
 
-  def initialize(window, x, y)
+  def initialize(x, y, map)
     @x, @y = x, y
     @direction = :left
     @stepping = false
     @vy = 0
-    @map = window.map
-    @jump_sound = Gosu::Sample.new(window, "media/boink.wav")
-    @standing_image, @walk_image_1, @walk_image_2, @jump_image = *Image.load_tiles(window, "media/CptnRuby.png", 50, 50, false)
+    @map = map
+    @jump_sound = Sound.new('boink.wav')
+    @standing_image, @walk_image_1, @walk_image_2, @jump_image = *Image.load_tiles($window, image_path('cptn_ruby.png'), 50, 50, false)
     @current_image = @standing_image    
   end
   
