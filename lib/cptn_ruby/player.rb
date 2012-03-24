@@ -2,7 +2,7 @@ class Player
   include AssetsHelper
 
   GRAVITY = 1.0
-  HEIGHT = 45
+  HEIGHT = 80
   WIDTH = 25
   JUMP_SPEED = -30
   REACH = 50
@@ -17,7 +17,9 @@ class Player
     @vy = 0
     @map = map
     @jump_sound = Sound.new('boink.wav')
-    @standing_image, @walk_image_1, @walk_image_2, @jump_image = *Image.load_tiles($window, image_path('cptn_ruby.png'), 50, 50, false)
+    @walk_images = Image.load_tiles($window, image_path('run-sprite.png'), 50, 80, false)[0..4]
+    @standing_image = @walk_images.first
+    @jump_image = @walk_images[4]
     @current_image = @standing_image    
   end
   
@@ -133,7 +135,7 @@ class Player
   end
   
   def walk_image
-    (milliseconds / 175 % 2 == 0) ? @walk_image_1 : @walk_image_2
+    @walk_images[(milliseconds / 85 % 5)]
   end
   
   def can_collect?(x, y)
