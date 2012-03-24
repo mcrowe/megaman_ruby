@@ -66,6 +66,10 @@ class Player
     old_gem_count - @map.gems.size
   end
   
+  def dead?
+    @y > @map.height_in_pixels + 2000
+  end
+  
   private
 
   def can_move?(d_x, d_y)

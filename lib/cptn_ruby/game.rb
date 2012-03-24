@@ -40,6 +40,10 @@ class Game < Window
     pause_on_exception { button_down!(button) }
   end
   
+  def needs_cursor?
+    true
+  end
+  
   private
   
   def update!
@@ -56,6 +60,7 @@ class Game < Window
     
     update_camera
 
+    load_level if @player.dead?
     load_next_level if level_complete?
 
   end
@@ -84,7 +89,19 @@ class Game < Window
       @song.toggle_play
     when KbO
       @song.shuffle  
+    when MsLeft
+      add_map_block
+    when MsRight
+      remove_map_block
     end
+  end
+  
+  def add_map_block
+    @map.add_block(mouse_x + @camera_x, mouse_y + @camera_y)
+  end
+  
+  def remove_map_block
+    @map.remove_block(mouse_x + @camera_x, mouse_y + @camera_y)
   end
   
   def draw_world

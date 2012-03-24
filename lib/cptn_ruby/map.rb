@@ -56,8 +56,20 @@ class Map
     y < 0 || @tiles[x / 50][y / 50]
   end
   
+  def height_in_pixels
+    @height * 50
+  end
+  
   def no_more_gems?
     @gems.empty?
+  end
+  
+  def add_block(x, y)
+    @tiles[x / 50][y / 50] = Tiles::Earth
+  end
+  
+  def remove_block(x, y)
+    @tiles[x / 50][y / 50] = nil
   end
   
 end
