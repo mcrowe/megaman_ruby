@@ -1,8 +1,8 @@
 class Hud
 	include TextHelper
 
-	def draw(score)
-		write("Score: #{score}", 10, 10)
+	def draw(health)
+		write("Health: #{health}", 10, 10)
 	end
 
 end

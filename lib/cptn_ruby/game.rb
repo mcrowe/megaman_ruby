@@ -2,14 +2,14 @@ class Game < Window
   include AssetsHelper
   include TextHelper
 
-  SCREEN_WIDTH = 960
-  SCREEN_HEIGHT = 560
+  SCREEN_WIDTH = 1280
+  SCREEN_HEIGHT = 800
   TILE_SIZE = 50
 
   attr_reader :map
 
   def initialize
-    super(SCREEN_WIDTH, SCREEN_HEIGHT, false)
+    super(SCREEN_WIDTH, SCREEN_HEIGHT, false) # true for fullscreen
     self.caption = 'Captain Ruby'
   end
 
@@ -23,6 +23,10 @@ class Game < Window
     @beep = Sound.new('beep.wav')
     @song = BackgroundSong.new
 
+    @camera_x = @camera_y = 0
+    
+    @click_mode = :map
+    
     load_next_level
 
     super
@@ -50,11 +54,20 @@ class Game < Window
     return if paused?
     return if loading_level?
     
+    if @click_mode == :map
+      add_map_block if button_down?(MsLeft)
+      remove_map_block if button_down?(MsRight)
+    end
+    
     @player.step_left if button_down?(KbLeft)
     @player.step_right if button_down?(KbRight)
     @player.update
-    
+        
     gems_collected = @player.collect_gems
+    
+    @bad_dudes.each do |bd|     
+      bd.update(@player)
+    end
 
     update_score(gems_collected)
     
@@ -88,11 +101,17 @@ class Game < Window
     when KbP
       @song.toggle_play
     when KbO
-      @song.shuffle  
+      @song.shuffle
+    when Kb1
+      @click_mode = :bad_dude
+    when Kb2
+      @click_mode = :map
+    when KbL
+      @player.throw_fireball
     when MsLeft
-      add_map_block
-    when MsRight
-      remove_map_block
+      if @click_mode == :bad_dude
+        @bad_dudes << BadDude.new(mouse_x + @camera_x, mouse_y + @camera_y, @map)
+      end
     end
   end
   
@@ -106,11 +125,12 @@ class Game < Window
   
   def draw_world
     @background.draw
-    @hud.draw(@score)
+    @hud.draw(@player.health)
           
     relative_to_camera do
       @map.draw
       @player.draw
+      @bad_dudes.each { |bd| bd.draw }
     end
   end
   
@@ -159,6 +179,11 @@ class Game < Window
   def load_level
     @map = Map.new(asset_path("maps/map_level_#{@level}.txt"))
     @player = Player.new(400, 100, @map)
+    @bad_dudes = [
+      BadDude.new(800, 300, @map),
+      BadDude.new(900, 300, @map)
+    ]
+      
     @load_level_start = milliseconds    
   end
   
@@ -174,7 +199,7 @@ class Game < Window
   end
   
   def relative_to_camera
-    translate(-@camera_x, -@camera_y) do 
+    translate(-1 * @camera_x, -1 * @camera_y) do 
       yield
     end
   end

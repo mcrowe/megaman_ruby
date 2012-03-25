@@ -1,6 +1,6 @@
-class Player
+class BadDude
   include AssetsHelper
-
+  extend AssetsHelper
   GRAVITY = 1
   
   HEIGHT = 30
@@ -8,10 +8,12 @@ class Player
   JUMP_SPEED = -20
   WALL_JUMP_SPEED = -16
   REACH = 20
-  SPEED = 5
-  FIREBALL_COOLDOWN = 300
+  SPEED = 3
 
-  attr_reader :x, :y, :score, :health
+
+  attr_reader :x, :y, :score
+
+
 
   def initialize(x, y, map)
     @x, @y = x, y
@@ -19,54 +21,55 @@ class Player
     @stepping = false
     @vy = 0
     @map = map
-    @hurt_sound = Sound.new('44429__thecheeseman__hurt2.wav', 300)
-    @jump_sound = Sound.new('boink.wav')
 
-    @fireballs = []
-
-    # @standing_image, @walk_image_1, @walk_image_2, @jump_image = *Image.load_tiles($window, image_path('cptn_ruby.png'), 50, 50, false)
-
-    @walking_images = (0..10).map do |i|
-      Gosu::Image.new($window, image_path("Xdefault_run0#{'%02d' % i}.gif"), false)
-    end
-    
-    @standing_images = (1..3).map do |i|
-      Gosu::Image.new($window, image_path("Xdefault_breathe00#{i}.gif"), true)
-    end
-    
-    @jumping_image = @walking_images[3]
     
     @current_image = standing_image
-    
-    @health = 100
-    
-    @last_fireball_time = 0
-    
   end
   
-  def damage(amount)
-    @health -= amount
-    @hurt_sound.play
-  end
-
-
   def draw
     direction = @direction == :left ? -1 : 1
     @current_image.draw_rot(@x, @y - HEIGHT - 4, ZOrder::CptnRuby, 0, 0.5, 0, direction)
-    
-    @fireballs.each { |fb| fb.draw }
   end
   
-  def update
+  def can_touch?(player)
+    (@x - player.x).abs < REACH && (@y - player.y).abs < REACH
+  end
+  
+  def update(player)
     update_image
     add_gravity
     move_vertically
+    
     @stepping = false
     
-    @fireballs.each { |fb| fb.update }
+    # c = milliseconds / 175 % 20
+    
+    if @direction == :left
+      step_left
+      turn_around if can_move_down?
+      turn_around if !can_move_left?
+    else
+      step_right
+      turn_around if can_move_down?
+      turn_around if !can_move_right?
+    end
+    
+    player.damage(1) if can_touch?(player)
     
   end
-
+  
+  def turn_around
+    if @direction == :left
+      step_right
+    else
+      step_left
+    end
+  end
+  
+  def growl
+    BadDude.jump_sound.play
+  end
+  
   def jump
     if !can_move_down?
       jump!(JUMP_SPEED)
@@ -102,14 +105,7 @@ class Player
   end
   
   def dead?
-    @y > @map.height_in_pixels + 2000 || @health <= 0
-  end
-  
-  def throw_fireball
-    unless milliseconds - @last_fireball_time < FIREBALL_COOLDOWN
-      @fireballs << Fireball.new(@x, @y - 30, @direction)
-      @last_fireball_time = milliseconds
-    end
+    @y > @map.height_in_pixels + 2000
   end
   
   private
@@ -121,7 +117,7 @@ class Player
   
   def update_image
     @current_image = if @vy < 0
-      @jumping_image
+      @@jumping_image
     elsif @stepping
       walk_image
     else
@@ -184,7 +180,7 @@ class Player
   end
   
   def walk_image
-    @walking_images[milliseconds / 100 % 8]
+    BadDude.walking_images[milliseconds / 100 % 8]
   end
   
   def standing_image
@@ -192,16 +188,36 @@ class Player
     c = milliseconds / 175 % 12
     
     if c == 0 || c == 2
-      @standing_images[1]
+      BadDude.standing_images[1]
     elsif c == 1
-     @standing_images[2]
+     BadDude.standing_images[2]
     else
-     @standing_images[0]
+     BadDude.standing_images[0]
    end
   end
   
   def can_collect?(x, y)
     (x - @x).abs < REACH && (y - @y).abs < REACH
+  end
+  
+  def self.jump_sound
+    @@jump_sound ||= Sound.new('boink.wav')
+  end
+
+  def self.walking_images
+    @@walking_images ||= (0..10).map do |i|
+      Gosu::Image.new($window, image_path("Xdefaultfire_run0#{'%02d' % i}.gif"), false)
+    end
+  end
+  
+  def self.standing_images
+    @@standing_images ||= (1..3).map do |i|
+      Gosu::Image.new($window, image_path("Xdefault_breathe00#{i}.gif"), true)
+    end
+  end
+  
+  def self.jumping_image
+    @@jumping_image ||= @@walking_images[3]
   end
   
 end
