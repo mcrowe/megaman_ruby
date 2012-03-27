@@ -4,7 +4,7 @@ class Game < Window
 
   SCREEN_WIDTH = 1280
   SCREEN_HEIGHT = 800
-  TILE_SIZE = 50
+  GRAVITY = 1
 
   attr_reader :map
 
@@ -61,13 +61,10 @@ class Game < Window
     
     @player.step_left if button_down?(KbLeft)
     @player.step_right if button_down?(KbRight)
-    @player.update
         
     gems_collected = @player.collect_gems
     
-    @bad_dudes.each do |bd|     
-      bd.update(@player)
-    end
+    AnimatedObject.update_all(@map, @player)
 
     update_score(gems_collected)
     
@@ -75,7 +72,6 @@ class Game < Window
 
     load_level if @player.dead?
     load_next_level if level_complete?
-
   end
   
   def draw!
@@ -128,9 +124,9 @@ class Game < Window
     @hud.draw(@player.health)
           
     relative_to_camera do
+      AnimatedObject.draw_all
+      
       @map.draw
-      @player.draw
-      @bad_dudes.each { |bd| bd.draw }
     end
   end
   
@@ -155,11 +151,11 @@ class Game < Window
   end
   
   def update_camera
-    max_x = map_width_in_pixels - SCREEN_WIDTH
+    max_x = @map.width_in_pixels - SCREEN_WIDTH
     x_with_player_in_center_screen = @player.x - (SCREEN_WIDTH / 2)
     @camera_x = [ [0, x_with_player_in_center_screen].max, max_x].min
     
-    max_y = map_height_in_pixels - SCREEN_HEIGHT
+    max_y = @map.height_in_pixels - SCREEN_HEIGHT
     y_with_player_in_center_screen = @player.y - (SCREEN_HEIGHT / 2)
     @camera_y = [ [0, y_with_player_in_center_screen].max, max_y].min 
   end
@@ -202,14 +198,6 @@ class Game < Window
     translate(-1 * @camera_x, -1 * @camera_y) do 
       yield
     end
-  end
-  
-  def map_width_in_pixels
-    @map.width * TILE_SIZE
-  end
-  
-  def map_height_in_pixels
-    @map.height * TILE_SIZE
   end
   
   def level_complete?

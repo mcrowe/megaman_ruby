@@ -1,4 +1,4 @@
-class Fireball
+class Fireball < AnimatedObject
   include AssetsHelper
   
   def initialize(x, y, direction)
@@ -7,6 +7,8 @@ class Fireball
     @direction = direction
     @image = Gosu::Image.new($window, image_path("Xarmored_hadouken004.gif"), false)
     Fireball.sound.play
+    
+    super()
   end
   
   def draw
@@ -14,7 +16,7 @@ class Fireball
     @image.draw(@x, @y, ZOrder::CptnRuby, d)
   end
   
-  def update
+  def update(map, player)
     if @direction == :right
       @x += 10 
     else

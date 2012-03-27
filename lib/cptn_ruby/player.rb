@@ -1,7 +1,5 @@
-class Player
+class Player < AnimatedObject
   include AssetsHelper
-
-  GRAVITY = 1
   
   HEIGHT = 30
   WIDTH = 15
@@ -15,16 +13,14 @@ class Player
 
   def initialize(x, y, map)
     @x, @y = x, y
+    @map = map
+    
     @direction = :left
     @stepping = false
     @vy = 0
-    @map = map
+
     @hurt_sound = Sound.new('44429__thecheeseman__hurt2.wav', 300)
     @jump_sound = Sound.new('boink.wav')
-
-    @fireballs = []
-
-    # @standing_image, @walk_image_1, @walk_image_2, @jump_image = *Image.load_tiles($window, image_path('cptn_ruby.png'), 50, 50, false)
 
     @walking_images = (0..10).map do |i|
       Gosu::Image.new($window, image_path("Xdefault_run0#{'%02d' % i}.gif"), false)
@@ -42,6 +38,7 @@ class Player
     
     @last_fireball_time = 0
     
+    super()
   end
   
   def damage(amount)
@@ -49,22 +46,16 @@ class Player
     @hurt_sound.play
   end
 
-
   def draw
     direction = @direction == :left ? -1 : 1
     @current_image.draw_rot(@x, @y - HEIGHT - 4, ZOrder::CptnRuby, 0, 0.5, 0, direction)
-    
-    @fireballs.each { |fb| fb.draw }
   end
   
-  def update
+  def update(map, player)
     update_image
     add_gravity
     move_vertically
-    @stepping = false
-    
-    @fireballs.each { |fb| fb.update }
-    
+    @stepping = false  
   end
 
   def jump
@@ -107,7 +98,7 @@ class Player
   
   def throw_fireball
     unless milliseconds - @last_fireball_time < FIREBALL_COOLDOWN
-      @fireballs << Fireball.new(@x, @y - 30, @direction)
+      Fireball.new(@x, @y - 30, @direction)
       @last_fireball_time = milliseconds
     end
   end
@@ -130,7 +121,7 @@ class Player
   end
 
   def add_gravity
-    @vy += GRAVITY
+    @vy += Game::GRAVITY
   end
   
   def move_vertically

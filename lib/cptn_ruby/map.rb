@@ -5,6 +5,8 @@ class Map
     Grass = 0
     Earth = 1
   end
+
+  TILE_SIZE = 50
   
   attr_reader :width, :height, :gems
   
@@ -26,7 +28,7 @@ class Map
         when '#'
           Tiles::Earth
         when 'x'
-          @gems.push(CollectibleGem.new(gem_img, x * 50 + 25, y * 50 + 25))
+          @gems.push(CollectibleGem.new(gem_img, TILE_SIZE*x + TILE_SIZE/2, TILE_SIZE*y + TILE_SIZE/2))
           nil
         else
           nil
@@ -44,7 +46,7 @@ class Map
         if tile
           # Draw the tile with an offset (tile images have some overlap)
           # Scrolling is implemented here just as in the game objects.
-          @tileset[tile].draw(x * 50 - 5, y * 50 - 5, ZOrder::Tiles)
+          @tileset[tile].draw(TILE_SIZE*x - 5, TILE_SIZE*y - 5, ZOrder::Tiles)
         end
       end
     end
@@ -53,11 +55,7 @@ class Map
   
   # Solid at a given pixel position?
   def solid?(x, y)
-    y < 0 || @tiles[x / 50][y / 50]
-  end
-  
-  def height_in_pixels
-    @height * 50
+    y < 0 || tile_at(x, y)
   end
   
   def no_more_gems?
@@ -65,11 +63,27 @@ class Map
   end
   
   def add_block(x, y)
-    @tiles[x / 50][y / 50] = Tiles::Earth
+    set_tile_at(x, y, Tiles::Earth)
   end
   
   def remove_block(x, y)
-    @tiles[x / 50][y / 50] = nil
+    set_tile_at(x, y, nil)
+  end
+  
+  def width_in_pixels
+    width * TILE_SIZE
+  end
+  
+  def height_in_pixels
+    height * TILE_SIZE
+  end
+  
+  def tile_at(x, y)
+    @tiles[x / TILE_SIZE][y / TILE_SIZE]
+  end
+  
+  def set_tile_at(x, y, value)
+    @tiles[x / TILE_SIZE][y / TILE_SIZE] = value
   end
   
 end
