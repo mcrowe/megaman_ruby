@@ -9,15 +9,11 @@ class Player < AnimatedObject
   SPEED = 5
   FIREBALL_COOLDOWN = 300
 
-  attr_reader :x, :y, :score, :health
+  attr_reader :score, :health
 
-  def initialize(x, y, map)
-    @x, @y = x, y
-    @map = map
-    
+  def initialize(x, y, map)  
     @direction = :left
     @stepping = false
-    @vy = 0
 
     @hurt_sound = Sound.new('44429__thecheeseman__hurt2.wav', 300)
     @jump_sound = Sound.new('boink.wav')
@@ -38,7 +34,7 @@ class Player < AnimatedObject
     
     @last_fireball_time = 0
     
-    super()
+    super(x, y, map)
   end
   
   def damage(amount)
@@ -98,7 +94,7 @@ class Player < AnimatedObject
   
   def throw_fireball
     unless milliseconds - @last_fireball_time < FIREBALL_COOLDOWN
-      Fireball.new(@x, @y - 30, @direction)
+      Fireball.new(@x, @y - HEIGHT, @map, @direction)
       @last_fireball_time = milliseconds
     end
   end
@@ -179,7 +175,6 @@ class Player < AnimatedObject
   end
   
   def standing_image
-    
     c = milliseconds / 175 % 12
     
     if c == 0 || c == 2

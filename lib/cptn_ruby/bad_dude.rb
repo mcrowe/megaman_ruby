@@ -5,18 +5,16 @@ class BadDude < AnimatedObject
   HEIGHT = 30
   WIDTH = 15
   REACH = 20
-  SPEED = 3
+  SPEED = 2
 
   def initialize(x, y, map)
-    @x, @y = x, y
-    @map = map
     
     @direction = :left
     @vy = 0
     
     update_image
     
-    super()
+    super(x, y, map)
   end
   
   def draw
@@ -27,19 +25,36 @@ class BadDude < AnimatedObject
   def can_touch?(player)
     (@x - player.x).abs < REACH && (@y - player.y).abs < REACH
   end
+
+  def collide(target)
+    target.delete
+    delete
+  end
   
   def update(map, player)
     update_image
     add_gravity
     move_vertically
+
+    if (player.y - @y).abs < 50 || player.y > @y + 40
+      if player.x < @x
+        @direction = :left
+      else
+        @direction = :right
+      end
+    end
     
     if @direction == :left
       step_left
-      turn_around if can_move_down?
+      if player.y < @y + 40 && can_move_down?
+        turn_around
+      end
       turn_around if !can_move_left?
     else
       step_right
-      turn_around if can_move_down?
+      if player.y < @y && can_move_down?
+        turn_around
+      end
       turn_around if !can_move_right?
     end
     

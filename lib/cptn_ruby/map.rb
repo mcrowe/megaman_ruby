@@ -55,7 +55,7 @@ class Map
   
   # Solid at a given pixel position?
   def solid?(x, y)
-    y < 0 || tile_at(x, y)
+    y < 0 || x < 0 || x >= width_in_pixels || tile_at(x, y) 
   end
   
   def no_more_gems?

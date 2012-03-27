@@ -173,6 +173,7 @@ class Game < Window
   end
   
   def load_level
+    AnimatedObject.clear
     @map = Map.new(asset_path("maps/map_level_#{@level}.txt"))
     @player = Player.new(400, 100, @map)
     @bad_dudes = [
